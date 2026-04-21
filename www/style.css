@@ -327,6 +327,7 @@ input, textarea, select { font-family: var(--font); }
 .meal-chip.base    { background: rgba(249,197,107,.25); color: #7a5010; }
 .meal-chip.protein { background: rgba(249,133,107,.2);  color: #7a2010; }
 .meal-chip.other   { background: rgba(126,200,164,.2);  color: #1a6040; }
+.meal-chip.snack   { background: rgba(180,140,220,.2);  color: #5a2080; }
 .meal-snack-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
 
 /* 시간이름 드롭다운 */
@@ -431,6 +432,7 @@ input, textarea, select { font-family: var(--font); }
 .cube-card.base::before    { background: var(--base-color); }
 .cube-card.protein::before { background: var(--protein-color); }
 .cube-card.other::before   { background: var(--other-color); }
+.cube-card.snack::before   { background: #b48cdc; }
 
 .cube-card-name {
   font-size: 15px; font-weight: 700; color: var(--text);

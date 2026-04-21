@@ -118,6 +118,7 @@
               <button class="cube-cat-btn" data-cat="base">🍚</button>
               <button class="cube-cat-btn" data-cat="protein">🥩</button>
               <button class="cube-cat-btn" data-cat="other">🥦</button>
+              <button class="cube-cat-btn" data-cat="snack">🥞</button>
             </div>
           </div>
         </div>
@@ -192,6 +193,16 @@
             총 이유식: <strong id="slot-total-g">0g</strong>
           </div>
         </div>
+        <div id="slot-snack-cube-section" class="hidden">
+          <div class="category-section">
+            <div class="category-label">🥞 간식</div>
+            <div id="slot-snack-cubes" class="cube-picker-row"></div>
+            <button class="btn-add-cube-slot" data-cat="snack">+ 큐브 추가</button>
+          </div>
+          <div class="total-g-row">
+            총 간식: <strong id="slot-total-g-snack">0g</strong>
+          </div>
+        </div>
         <div id="slot-snack-section" class="hidden">
           <label class="form-label">내용</label>
           <textarea id="slot-snack-memo" class="form-input" rows="3" placeholder="내용을 입력하세요"></textarea>
@@ -243,6 +254,7 @@
           <option value="base">🍚 베이스죽</option>
           <option value="protein">🥩 단백질</option>
           <option value="other">🥦 기타</option>
+          <option value="snack">🥞 간식</option>
         </select>
         <div class="form-row-2">
           <div>

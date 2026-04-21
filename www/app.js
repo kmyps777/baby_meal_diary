@@ -459,7 +459,7 @@ async function deletePlan() {
 // ════════════════════════════════════════
 let mealYear, mealMonth, mealData = {}, selectedMealDate = null;
 let editingSlotId = null, currentSlotType = 'meal';
-let slotCubes = { base: [], protein: [], other: [] };
+let slotCubes = { base: [], protein: [], other: [], snack: [] };
 let pickerCat = null, pickerSelected = [];
 const DEFAULT_TIME_LABELS = ['오전이유식','오전간식','점심이유식','오후간식','저녁이유식'];
 let timeLabels = (() => {
@@ -488,7 +488,8 @@ function initMealTab() {
       document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentSlotType = btn.dataset.type;
-      document.getElementById('slot-meal-section').classList.remove('hidden');
+      document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
+      document.getElementById('slot-snack-cube-section').classList.toggle('hidden', currentSlotType !== 'snack');
       document.getElementById('slot-snack-section').classList.toggle('hidden', currentSlotType !== 'snack');
     };
   });
@@ -629,9 +630,7 @@ function renderMealDayPanel(dateStr) {
     if (slot.type === 'snack') {
       const snackTotalG = (slot.cubes||[]).reduce((s,c) => s+(c.g||0), 0);
       const snackCats = [
-        { key:'base',    label:'🍚 베이스죽' },
-        { key:'protein', label:'🥩 단백질'   },
-        { key:'other',   label:'🥦 기타'     },
+        { key:'snack', label:'🥞 간식' },
       ];
       const snackCatHtml = snackCats.map(cat => {
         const cs = (slot.cubes||[]).filter(c => c.cat === cat.key);
@@ -706,7 +705,7 @@ async function removeTimeLabel(lbl) {
 
 function openSlotModal(id) {
   editingSlotId = id;
-  slotCubes = { base: [], protein: [], other: [] };
+  slotCubes = { base: [], protein: [], other: [], snack: [] };
   const isEdit = !!id;
   document.getElementById('modal-slot-title').textContent = isEdit ? '끼니 수정' : '끼니 작성';
   document.getElementById('btn-slot-delete').classList.toggle('hidden', !isEdit);
@@ -725,7 +724,8 @@ function openSlotModal(id) {
   }
 
   document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === currentSlotType));
-  document.getElementById('slot-meal-section').classList.remove('hidden');
+  document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
+  document.getElementById('slot-snack-cube-section').classList.toggle('hidden', currentSlotType !== 'snack');
   document.getElementById('slot-snack-section').classList.toggle('hidden', currentSlotType !== 'snack');
   renderSlotCubes();
   updateTotalG();
@@ -733,7 +733,7 @@ function openSlotModal(id) {
 }
 
 function renderSlotCubes() {
-  ['base','protein','other'].forEach(cat => {
+  ['base','protein','other','snack'].forEach(cat => {
     const row = document.getElementById(`slot-${cat}-cubes`);
     if (!row) return;
     row.innerHTML = slotCubes[cat].map((c, idx) => `
@@ -748,8 +748,11 @@ function removeSlotCube(cat, idx) {
   renderSlotCubes(); updateTotalG();
 }
 function updateTotalG() {
-  const total = Object.values(slotCubes).flat().reduce((s,c) => s+(c.g||0), 0);
-  document.getElementById('slot-total-g').textContent = total + 'g';
+  const mealTotal = [...(slotCubes.base||[]), ...(slotCubes.protein||[]), ...(slotCubes.other||[])].reduce((s,c) => s+(c.g||0), 0);
+  const snackTotal = (slotCubes.snack||[]).reduce((s,c) => s+(c.g||0), 0);
+  document.getElementById('slot-total-g').textContent = mealTotal + 'g';
+  const snackEl = document.getElementById('slot-total-g-snack');
+  if (snackEl) snackEl.textContent = snackTotal + 'g';
 }
 
 async function saveSlot() {
@@ -829,7 +832,7 @@ function exportMealExcel() {
   const year  = mealYear;
   const month = mealMonth;
   const title = `${year}년 ${month+1}월 이유식 식단표`;
-  const rows  = [['날짜', '요일', '끼니/간식', '종류', '베이스죽', '단백질', '기타', '총g', '간식내용']];
+  const rows  = [['날짜', '요일', '끼니/간식', '종류', '베이스죽', '단백질', '기타', '간식', '총g', '내용']];
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const dayNames = ['일','월','화','수','목','금','토'];
 
@@ -838,20 +841,22 @@ function exportMealExcel() {
     const dow = new Date(year, month, d).getDay();
     const slots = (mealData[ds] || []).slice().sort((a,b) => (a.order||0)-(b.order||0));
     if (slots.length === 0) {
-      rows.push([korDate(ds).split(' (')[0], dayNames[dow], '', '', '', '', '', '', '']);
+      rows.push([korDate(ds).split(' (')[0], dayNames[dow], '', '', '', '', '', '', '', '']);
     } else {
       slots.forEach((slot, i) => {
         const dateCell = i === 0 ? korDate(ds).split(' (')[0] : '';
         const dowCell  = i === 0 ? dayNames[dow] : '';
+        const cubes    = slot.cubes || [];
         if (slot.type === 'snack') {
-          rows.push([dateCell, dowCell, slot.time_label, '간식', '', '', '', '', slot.snack_memo||'']);
+          const snack   = cubes.filter(c=>c.cat==='snack').map(c=>`${c.cubeName}(${c.g}g)`).join(', ');
+          const totalG  = cubes.reduce((s,c)=>s+(c.g||0),0);
+          rows.push([dateCell, dowCell, slot.time_label, '간식', '', '', '', snack, totalG > 0 ? totalG+'g' : '', slot.snack_memo||'']);
         } else {
-          const cubes   = slot.cubes || [];
           const base    = cubes.filter(c=>c.cat==='base').map(c=>`${c.cubeName}(${c.g}g)`).join(', ');
           const protein = cubes.filter(c=>c.cat==='protein').map(c=>`${c.cubeName}(${c.g}g)`).join(', ');
           const other   = cubes.filter(c=>c.cat==='other').map(c=>`${c.cubeName}(${c.g}g)`).join(', ');
           const totalG  = cubes.reduce((s,c)=>s+(c.g||0),0);
-          rows.push([dateCell, dowCell, slot.time_label, '이유식', base, protein, other, totalG+'g', '']);
+          rows.push([dateCell, dowCell, slot.time_label, '이유식', base, protein, other, '', totalG+'g', '']);
         }
       });
     }
@@ -941,14 +946,14 @@ function openCubePicker(cat) {
   pickerCat = cat;
   pickerSelected = [];
   document.getElementById('cube-picker-search').value = '';
-  document.getElementById('modal-picker-title').textContent = `큐브 선택 — ${{base:'🍚 베이스죽',protein:'🥩 단백질',other:'🥦 기타'}[cat]}`;
+  document.getElementById('modal-picker-title').textContent = `큐브 선택 — ${{base:'🍚 베이스죽',protein:'🥩 단백질',other:'🥦 기타',snack:'🥞 간식'}[cat]}`;
   renderCubePickerList('');
   updatePickerBtn();
   openModal('modal-cube-picker');
 }
 function renderCubePickerList(search) {
   const list = document.getElementById('cube-picker-list');
-  const catOrder = { base:0, protein:1, other:2 };
+  const catOrder = { base:0, protein:1, other:2, snack:3 };
   const active = cubeItems
     .filter(c => c.status === 'active')
     .slice().sort((a,b) => {
@@ -958,7 +963,10 @@ function renderCubePickerList(search) {
       const expB = addDays(b.made_date, b.expire_days||14);
       return expA.localeCompare(expB);
     });
-  const filtered = search ? active.filter(c => c.name.includes(search)) : active;
+  const catFiltered = pickerCat === 'snack'
+    ? active.filter(c => c.category === 'snack')
+    : active.filter(c => c.category !== 'snack');
+  const filtered = search ? catFiltered.filter(c => c.name.includes(search)) : catFiltered;
   if (!filtered.length) { list.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:10px">큐브가 없어요.</div>'; return; }
   list.innerHTML = filtered.map(c => {
     const sel = pickerSelected.find(x => x.cubeId === c.id);
@@ -969,7 +977,7 @@ function renderCubePickerList(search) {
       <div class="cube-picker-item ${sel ? 'selected' : ''}" onclick="togglePickerCube('${c.id}')">
         <div>
           <div class="cube-picker-item-name">${escHtml(c.name)}</div>
-          <div class="cube-picker-item-sub">${{base:'🍚 베이스죽',protein:'🥩 단백질',other:'🥦 기타'}[c.category]||''} · ${c.g}g/큐브 · <span class="${dd.danger ? 'picker-dday-danger' : ''}">${dd.label}</span></div>
+          <div class="cube-picker-item-sub">${{base:'🍚 베이스죽',protein:'🥩 단백질',other:'🥦 기타',snack:'🥞 간식'}[c.category]||''} · ${c.g}g/큐브 · <span class="${dd.danger ? 'picker-dday-danger' : ''}">${dd.label}</span></div>
         </div>
         <div>
           <div class="cube-picker-item-rem">잔여 ${rem}개</div>
@@ -1058,7 +1066,7 @@ async function loadCubes() {
 }
 
 function renderCubeList() {
-  const catOrder = { base:0, protein:1, other:2 };
+  const catOrder = { base:0, protein:1, other:2, snack:3 };
   function sortCubes(list) {
     if (cubeSortBy === 'expire') {
       return list.slice().sort((a, b) => {
