@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# iOS build artifacts
+ios/App/Pods/
+ios/App/App.xcworkspace/
+ios/App/build/
+ios/App/DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# Capacitor
+capacitor-cordova-ios-plugins/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# Claude local settings
+.claude/settings.local.json
