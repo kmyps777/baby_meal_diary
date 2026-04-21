@@ -488,7 +488,7 @@ function initMealTab() {
       document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentSlotType = btn.dataset.type;
-      document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
+      document.getElementById('slot-meal-section').classList.remove('hidden');
       document.getElementById('slot-snack-section').classList.toggle('hidden', currentSlotType !== 'snack');
     };
   });
@@ -627,14 +627,33 @@ function renderMealDayPanel(dateStr) {
 
   container.innerHTML = slots.map(slot => {
     if (slot.type === 'snack') {
+      const snackTotalG = (slot.cubes||[]).reduce((s,c) => s+(c.g||0), 0);
+      const snackCats = [
+        { key:'base',    label:'🍚 베이스죽' },
+        { key:'protein', label:'🥩 단백질'   },
+        { key:'other',   label:'🥦 기타'     },
+      ];
+      const snackCatHtml = snackCats.map(cat => {
+        const cs = (slot.cubes||[]).filter(c => c.cat === cat.key);
+        if (!cs.length) return '';
+        return `<div class="meal-slot-cat">
+          <div class="meal-slot-cat-label">${cat.label}</div>
+          <div class="meal-slot-chips">${cs.map(c => `<span class="meal-chip ${cat.key}">${escHtml(c.cubeName)} ${c.g}g</span>`).join('')}</div>
+        </div>`;
+      }).join('');
+      const snackBodyHtml = [
+        snackCatHtml,
+        slot.snack_memo ? `<div class="meal-snack-text">${escHtml(slot.snack_memo)}</div>` : ''
+      ].filter(Boolean).join('') || '<div style="color:var(--text3);font-size:13px">등록된 내용 없음</div>';
       return `
         <div class="meal-slot-card">
           <div class="meal-slot-header snack-hdr">
             <span class="meal-slot-time-snack">${escHtml(slot.time_label)}</span>
+            ${snackTotalG > 0 ? `<span class="meal-slot-total">총 ${snackTotalG}g</span>` : ''}
             <span class="meal-slot-badge snack">간식</span>
             <button class="btn-icon" onclick="openSlotModal('${slot.id}')">✏️</button>
           </div>
-          <div class="meal-slot-body"><div class="meal-snack-text">${escHtml(slot.snack_memo||'')}</div></div>
+          <div class="meal-slot-body">${snackBodyHtml}</div>
         </div>`;
     }
     const totalG = (slot.cubes||[]).reduce((s,c) => s+(c.g||0), 0);
@@ -706,7 +725,7 @@ function openSlotModal(id) {
   }
 
   document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === currentSlotType));
-  document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
+  document.getElementById('slot-meal-section').classList.remove('hidden');
   document.getElementById('slot-snack-section').classList.toggle('hidden', currentSlotType !== 'snack');
   renderSlotCubes();
   updateTotalG();
@@ -750,7 +769,7 @@ async function saveSlot() {
     time_label: timeLabel,
     type: currentSlotType,
     order: editingSlotId ? (existing.find(s=>s.id===editingSlotId)?.order || maxOrder+1) : maxOrder+1,
-    cubes: currentSlotType === 'meal' ? Object.values(slotCubes).flat() : [],
+    cubes: Object.values(slotCubes).flat(),
     snack_memo: currentSlotType === 'snack' ? document.getElementById('slot-snack-memo').value.trim() : ''
   };
 
@@ -901,8 +920,8 @@ async function deleteSlot() {
 async function applyMealCubeDiff(oldSlot, newSlot) {
   const delta = {};
   const tally = (cubeList, sign) => (cubeList||[]).forEach(c => { delta[c.cubeId] = (delta[c.cubeId]||0) + sign; });
-  if (oldSlot?.type === 'meal') tally(oldSlot.cubes, -1);
-  if (newSlot?.type === 'meal') tally(newSlot.cubes,  1);
+  if (oldSlot) tally(oldSlot.cubes, -1);
+  if (newSlot) tally(newSlot.cubes,  1);
   let changed = false;
   for (const [cubeId, diff] of Object.entries(delta)) {
     if (!diff) continue;
