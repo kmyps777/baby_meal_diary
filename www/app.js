@@ -1042,11 +1042,13 @@ function initCubeTab() {
       activeCubeTab = btn.dataset.ctab;
       document.getElementById('cube-list-active').classList.toggle('hidden', activeCubeTab !== 'active');
       document.getElementById('cube-list-done').classList.toggle('hidden',   activeCubeTab !== 'done');
+      document.getElementById('cube-done-header').classList.toggle('hidden', activeCubeTab !== 'done');
     };
   });
   document.getElementById('btn-add-cube').onclick = () => openCubeModal(null);
   document.getElementById('btn-cube-save').onclick   = saveCube;
   document.getElementById('btn-cube-delete').onclick = deleteCube;
+  document.getElementById('btn-delete-all-done').onclick = deleteAllDoneCubes;
   document.getElementById('btn-add-ingredient').onclick = addIngredient;
   document.getElementById('cube-ingredient-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addIngredient(); }
@@ -1263,6 +1265,18 @@ async function deleteCube() {
     toast('삭제되었어요 🗑️');
     await loadCubes();
     closeModal('modal-cube');
+  } catch(e) { toast('삭제 실패: ' + e.message); }
+}
+
+async function deleteAllDoneCubes() {
+  let targets = cubeItems.filter(c => c.status === 'done');
+  if (cubeCatFilter !== 'all') targets = targets.filter(c => c.category === cubeCatFilter);
+  if (targets.length === 0) return toast('삭제할 소진된 큐브가 없어요');
+  if (!confirm(`소진된 큐브 ${targets.length}개를 모두 삭제할까요?\n삭제 후 복구할 수 없어요.`)) return;
+  try {
+    await Promise.all(targets.map(c => dbDelete('cubes', c.id)));
+    toast(`소진된 큐브 ${targets.length}개 삭제 완료 🗑️`);
+    await loadCubes();
   } catch(e) { toast('삭제 실패: ' + e.message); }
 }
 
