@@ -832,7 +832,7 @@ function exportMealExcel() {
   const year  = mealYear;
   const month = mealMonth;
   const title = `${year}년 ${month+1}월 이유식 식단표`;
-  const rows  = [['날짜', '요일', '끼니/간식', '종류', '베이스죽', '단백질', '기타', '간식', '총g', '내용']];
+  const rows  = [['날짜', '요일', '끼니/간식', '종류', '베이스죽', '단백질', '기타', '간식', '총g', '메모']];
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const dayNames = ['일','월','화','수','목','금','토'];
 
@@ -963,9 +963,7 @@ function renderCubePickerList(search) {
       const expB = addDays(b.made_date, b.expire_days||14);
       return expA.localeCompare(expB);
     });
-  const catFiltered = pickerCat === 'snack'
-    ? active.filter(c => c.category === 'snack')
-    : active.filter(c => c.category !== 'snack');
+  const catFiltered = active.filter(c => c.category === pickerCat);
   const filtered = search ? catFiltered.filter(c => c.name.includes(search)) : catFiltered;
   if (!filtered.length) { list.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:10px">큐브가 없어요.</div>'; return; }
   list.innerHTML = filtered.map(c => {
