@@ -111,7 +111,7 @@ baby_meal_planner_nologin/
 | 항목 | 내용 |
 |------|------|
 | Bundle ID | com.miyun.babymealplanner |
-| 현재 버전 | 1.1 |
+| 현재 버전 | 1.1.1 |
 | 앱스토어 상태 | 출시 완료 |
 
 ---

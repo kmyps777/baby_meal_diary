@@ -131,6 +131,20 @@
 
   <!-- ════ MODALS ════ -->
 
+  <!-- Plan List Modal (날짜에 계획 여러 개일 때) -->
+  <div id="modal-plan-list" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-plan-list-title">계획 목록</h3>
+        <button class="btn-icon modal-close" data-modal="modal-plan-list">✕</button>
+      </div>
+      <div class="modal-body" id="modal-plan-list-body"></div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="openPlanModal(null, window._planListDate); closeModal('modal-plan-list')">+ 새 계획 추가</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Plan Modal -->
   <div id="modal-plan" class="modal-overlay hidden">
     <div class="modal-box">
@@ -203,7 +217,7 @@
             총 간식: <strong id="slot-total-g-snack">0g</strong>
           </div>
         </div>
-        <div id="slot-snack-section" class="hidden">
+        <div id="slot-snack-section">
           <label class="form-label">메모</label>
           <textarea id="slot-snack-memo" class="form-input" rows="3" placeholder="내용을 입력하세요"></textarea>
         </div>

@@ -589,3 +589,9 @@ input, textarea, select { font-family: var(--font); }
   margin-top: 4px;
 }
 .cube-consume-row.hidden { display: none; }
+
+.plan-list-item { padding: 14px 4px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.plan-list-item:last-child { border-bottom: none; }
+.plan-list-item:active { background: var(--bg2); border-radius: 8px; }
+.plan-list-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.plan-list-memo { font-size: 12px; color: var(--text3); margin-top: 3px; }

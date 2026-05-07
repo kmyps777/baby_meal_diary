@@ -383,7 +383,7 @@ function renderPlanCalendar() {
       const plans = planItems.filter(p => p.date === ds);
       if (plans.length === 0) openPlanModal(null, ds);
       else if (plans.length === 1) openPlanModal(plans[0].id);
-      else toast(`${korDate(ds)}: ${plans.length}개 계획`);
+      else openPlanListModal(plans, ds);
     });
     grid.appendChild(cell);
   }
@@ -404,6 +404,17 @@ function makePlanCell(day, ds, other, dow) {
   num.textContent = day;
   cell.appendChild(num);
   return cell;
+}
+
+function openPlanListModal(plans, ds) {
+  window._planListDate = ds;
+  document.getElementById('modal-plan-list-title').textContent = korDate(ds);
+  document.getElementById('modal-plan-list-body').innerHTML = plans.map(p => `
+    <div class="plan-list-item" onclick="closeModal('modal-plan-list'); openPlanModal('${p.id}')">
+      <div class="plan-list-name">${escHtml(p.ingredient)}</div>
+      ${p.memo ? `<div class="plan-list-memo">${escHtml(p.memo)}</div>` : ''}
+    </div>`).join('');
+  openModal('modal-plan-list');
 }
 
 function openPlanModal(id, prefillDate) {
@@ -490,7 +501,6 @@ function initMealTab() {
       currentSlotType = btn.dataset.type;
       document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
       document.getElementById('slot-snack-cube-section').classList.toggle('hidden', currentSlotType !== 'snack');
-      document.getElementById('slot-snack-section').classList.toggle('hidden', currentSlotType !== 'snack');
     };
   });
 
@@ -669,6 +679,10 @@ function renderMealDayPanel(dateStr) {
         <div class="meal-slot-chips">${cs.map(c => `<span class="meal-chip ${cat.key}">${escHtml(c.cubeName)} ${c.g}g</span>`).join('')}</div>
       </div>`;
     }).join('');
+    const mealBodyHtml = [
+      catHtml || '<div style="color:var(--text3);font-size:13px">등록된 큐브 없음</div>',
+      slot.snack_memo ? `<div class="meal-snack-text">${escHtml(slot.snack_memo)}</div>` : ''
+    ].filter(Boolean).join('');
     return `
       <div class="meal-slot-card">
         <div class="meal-slot-header meal-hdr">
@@ -677,7 +691,7 @@ function renderMealDayPanel(dateStr) {
           <span class="meal-slot-badge meal">이유식</span>
           <button class="btn-icon" onclick="openSlotModal('${slot.id}')">✏️</button>
         </div>
-        <div class="meal-slot-body">${catHtml || '<div style="color:var(--text3);font-size:13px">등록된 큐브 없음</div>'}</div>
+        <div class="meal-slot-body">${mealBodyHtml}</div>
       </div>`;
   }).join('');
 }
@@ -726,7 +740,6 @@ function openSlotModal(id) {
   document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === currentSlotType));
   document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
   document.getElementById('slot-snack-cube-section').classList.toggle('hidden', currentSlotType !== 'snack');
-  document.getElementById('slot-snack-section').classList.toggle('hidden', currentSlotType !== 'snack');
   renderSlotCubes();
   updateTotalG();
   openModal('modal-meal-slot');
@@ -773,7 +786,7 @@ async function saveSlot() {
     type: currentSlotType,
     order: editingSlotId ? (existing.find(s=>s.id===editingSlotId)?.order || maxOrder+1) : maxOrder+1,
     cubes: Object.values(slotCubes).flat(),
-    snack_memo: currentSlotType === 'snack' ? document.getElementById('slot-snack-memo').value.trim() : ''
+    snack_memo: document.getElementById('slot-snack-memo').value.trim()
   };
 
   const oldSlot = editingSlotId ? existing.find(s => s.id === editingSlotId) : null;
@@ -856,7 +869,7 @@ function exportMealExcel() {
           const protein = cubes.filter(c=>c.cat==='protein').map(c=>`${c.cubeName}(${c.g}g)`).join(', ');
           const other   = cubes.filter(c=>c.cat==='other').map(c=>`${c.cubeName}(${c.g}g)`).join(', ');
           const totalG  = cubes.reduce((s,c)=>s+(c.g||0),0);
-          rows.push([dateCell, dowCell, slot.time_label, '이유식', base, protein, other, '', totalG+'g', '']);
+          rows.push([dateCell, dowCell, slot.time_label, '이유식', base, protein, other, '', totalG+'g', slot.snack_memo||'']);
         }
       });
     }
