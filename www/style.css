@@ -362,6 +362,7 @@ input, textarea, select { font-family: var(--font); }
 .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 .category-section { margin-bottom: 14px; }
 .category-label { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+#slot-meal-section { margin-top: 20px; }
 .cube-picker-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .slot-cube-chip {
   display: flex; align-items: center; gap: 4px;
