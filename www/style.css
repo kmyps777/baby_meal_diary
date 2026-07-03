@@ -494,6 +494,11 @@ input, textarea, select { font-family: var(--font); }
   font-size: 12px; color: var(--text2); padding: 4px 0 2px;
 }
 .picker-selected-info.hidden { display: none; }
+.btn-sm { padding: 8px 14px !important; font-size: 13px !important; white-space: nowrap; }
+.picker-back-btn { font-size: 18px; margin-right: 4px; }
+#cube-picker-custom-g::-webkit-inner-spin-button,
+#cube-picker-custom-g::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+#cube-picker-custom-g { -moz-appearance: textfield; }
 
 /* 재료 태그 */
 .ingredient-tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; min-height: 28px; }

@@ -494,16 +494,6 @@ function initMealTab() {
   document.getElementById('btn-slot-save').onclick   = saveSlot;
   document.getElementById('btn-slot-delete').onclick = deleteSlot;
 
-  document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentSlotType = btn.dataset.type;
-      document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
-      document.getElementById('slot-snack-cube-section').classList.toggle('hidden', currentSlotType !== 'snack');
-    };
-  });
-
   document.querySelectorAll('.btn-add-cube-slot').forEach(btn => {
     btn.onclick = () => openCubePicker(btn.dataset.cat);
   });
@@ -728,18 +718,13 @@ function openSlotModal(id) {
     const slots = Object.values(mealData).flat();
     const slot = slots.find(s => s.id === id);
     document.getElementById('slot-time-label').value = slot.time_label || '';
-    currentSlotType = slot.type || 'meal';
     if (slot.cubes) slot.cubes.forEach(c => { slotCubes[c.cat] = slotCubes[c.cat] || []; slotCubes[c.cat].push({...c}); });
     document.getElementById('slot-snack-memo').value = slot.snack_memo || '';
   } else {
     document.getElementById('slot-time-label').value = '';
-    currentSlotType = 'meal';
     document.getElementById('slot-snack-memo').value = '';
   }
 
-  document.querySelectorAll('#slot-type-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === currentSlotType));
-  document.getElementById('slot-meal-section').classList.toggle('hidden', currentSlotType !== 'meal');
-  document.getElementById('slot-snack-cube-section').classList.toggle('hidden', currentSlotType !== 'snack');
   renderSlotCubes();
   updateTotalG();
   openModal('modal-meal-slot');
@@ -783,7 +768,7 @@ async function saveSlot() {
   const newSlot = {
     date: selectedMealDate,
     time_label: timeLabel,
-    type: currentSlotType,
+    type: [...(slotCubes.base||[]), ...(slotCubes.protein||[]), ...(slotCubes.other||[])].length > 0 ? 'meal' : 'snack',
     order: editingSlotId ? (existing.find(s=>s.id===editingSlotId)?.order || maxOrder+1) : maxOrder+1,
     cubes: Object.values(slotCubes).flat(),
     snack_memo: document.getElementById('slot-snack-memo').value.trim()
@@ -960,9 +945,41 @@ function openCubePicker(cat) {
   pickerSelected = [];
   document.getElementById('cube-picker-search').value = '';
   document.getElementById('modal-picker-title').textContent = `큐브 선택 — ${{base:'🍚 베이스죽',protein:'🥩 단백질',other:'🥦 기타',snack:'🥞 간식'}[cat]}`;
+  closeCubePickerCustomView();
   renderCubePickerList('');
   updatePickerBtn();
   openModal('modal-cube-picker');
+}
+function openCubePickerCustomView() {
+  document.getElementById('cube-picker-view-list').style.display = 'none';
+  document.getElementById('cube-picker-view-custom').style.display = 'flex';
+  document.getElementById('picker-footer-list').style.display = 'none';
+  document.getElementById('picker-footer-custom').style.display = 'block';
+  document.getElementById('btn-picker-back').style.display = '';
+  document.getElementById('modal-picker-title').textContent = '직접 추가';
+  document.getElementById('cube-picker-custom-name').value = '';
+  document.getElementById('cube-picker-custom-g').value = '';
+  document.getElementById('cube-picker-custom-name').focus();
+}
+function closeCubePickerCustomView() {
+  document.getElementById('cube-picker-view-list').style.display = '';
+  document.getElementById('cube-picker-view-custom').style.display = 'none';
+  document.getElementById('picker-footer-list').style.display = 'contents';
+  document.getElementById('picker-footer-custom').style.display = 'none';
+  document.getElementById('btn-picker-back').style.display = 'none';
+  document.getElementById('modal-picker-title').textContent = `큐브 선택 — ${{base:'🍚 베이스죽',protein:'🥩 단백질',other:'🥦 기타',snack:'🥞 간식'}[pickerCat]}`;
+}
+function confirmCustomIngredient() {
+  const name = document.getElementById('cube-picker-custom-name').value.trim();
+  const g = parseFloat(document.getElementById('cube-picker-custom-g').value) || 0;
+  if (!name) return toast('재료 이름을 입력해주세요');
+  if (g <= 0) return toast('용량을 입력해주세요');
+  slotCubes[pickerCat] = slotCubes[pickerCat] || [];
+  slotCubes[pickerCat].push({ cubeId: null, cubeName: name, g, cat: pickerCat, custom: true });
+  renderSlotCubes();
+  updateTotalG();
+  closeModal('modal-cube-picker');
+  toast(`${name} ${g}g 추가 완료`);
 }
 function renderCubePickerList(search) {
   const list = document.getElementById('cube-picker-list');
